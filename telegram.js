@@ -1,29 +1,40 @@
-const TelegramBot = require('node-telegram-bot-api');
+const axios = require('axios')
 //require('dotenv').config();
 const token = process.env.TG_API_TOKEN;
 const chatId = process.env.TG_CHAT_ID
-const bot = new TelegramBot(token);
+let tg = axios.create({
+  baseURL: 'https://api.telegram.org/bot'+token,
+});
 function prepareText(items){
-  
-  let helloPhrase = getCatchPhrase();
-  let text = `<b>${helloPhrase}</b> \n\n`;
-  for(key in items){
+  let texts = [];
+  for(let key in items){
     let item = items[key]
+    let helloPhrase = getCatchPhrase();
+    let text = `<b>${helloPhrase}</b> \n`;
     text += `\n<b>${item.fullName}</b> - ${Math.floor(item.fullTime/60)}h ${item.fullTime%60}m \n`
-    for(work of item.workItems){
-      let date = new Date(work.created)
+    for(let work of item.workItems){
+      //let date = new Date(work.created)
       //text += `${date.toString()}\n`
       text += `${work.duration.presentation} - ${work.type.name} - ${work.text} \n`
     }
+    texts.push(text)
   }
-  return text
-
+  return texts
 }
 
 module.exports = {
-  sendWorkItems:(items) => {
-    let text = prepareText(items);
-    bot.sendMessage(chatId, text, {parse_mode: 'html'});
+  sendWorkItems: async (items) => {
+    let texts = prepareText(items);
+    return await Promise.all(texts.map(text =>{
+      tg.get('/sendMessage',{
+        params:{
+          chat_id:chatId,
+          text,
+          parse_mode:'html' 
+        }
+      }).catch(err=>{console.log(err)});
+    }))
+    
   }
 }
 
@@ -35,29 +46,22 @@ let catchPhrases = [
 "Say ‘hello’ to my little friend!",
 "Hello, my name is Inigo Montoya. You killed my father. Prepare to die.",
 "Heeeeere’s Johnny!",
-"Bueller….Bueller…Bueller?",
-"A martini…shaken, not stirred.",
 "Shall…we…play…a…game?",
 "Alrighty then!",
 "To infinity…and beyond!",
 "Yeah baby, yeah!",
 "I know kung fu.",
 "I have come here to chew bubblegum and kick ass, and I’m all out of bubblegum.",
-"I know you are, but what am I?",
-"I pity the fool.",
 "You talkin’ to me?",
 "You’ve gotta ask yourself a question: do I feel lucky? …well, do ya, punk?!?",
-"WHAT IS YOUR MAJOR MALFUNCTION, NUMBNUTS?!?",
 "There can be only one.",
 "Aw, crap.",
 "YOU SHALL NOT PASS!",
 "THIS IS SPARTA!",
 "Houston, we have a problem.",
-"Warriors, come out to play-ee-ay!",
 "I must break you.",
 "Shit just got real.",
 "I’m as mad as hell, and I’m not gonna take this anymore!",
-"It’s clobberin’ time!",
 "Here comes the pain!",
 "HULK SMASH!", 
 "Go ahead, make my day.",
@@ -74,10 +78,6 @@ let catchPhrases = [
 "Ding-dong, the witch is dead!",
 "I want my two dollars!",
 "SHOW ME THE MONEY!!!",
-"Greed, for lack of a better word, is good.",
-"Very nice, how much?",
-"One MILLION dollars!",
-"I’ll buy that for a dollar!",
 "Excellent!",
 "The horror…..the horror.",
 "You can’t handle the truth!",
@@ -96,7 +96,6 @@ let catchPhrases = [
 "You’re only supposed to blow the bloody doors off!",
 "Machete don’t text.",
 "You’re gonna need a bigger boat.", 
-"Badges? We don’t have no badges. We don’t need no badges. I don’t have to show you any stinking badges!",
 "I am your father.",
 "I see dead people.",
 "Toto, I have a feeling we’re not in Kansas anymore.",
@@ -108,7 +107,6 @@ let catchPhrases = [
 "I ate his liver with some fava beans and a nice chianti.",
 "THE POWER OF CHRIST COMPELS YOU!!!",
 "I’m gonna make him an offer he can’t refuse.",
-"Soylent Green is people!",
 "I know it was you, Fredo. You broke my heart. You broke my heart!",
 "Here’s lookin’ at you, kid.",
 "Never give up, never surrender!",
@@ -130,17 +128,9 @@ let catchPhrases = [
 "My bad!",
 "Is it safe?",
 "Yes, sensei!",
-"Hey! I’m walking here! I’m walking here!",
 "Uhh….yeah.",
-"In this country, you gotta make the money first. Then, when you get the money, you get the power.Then when you get the power, THEN you get the woman!",
-"I’m the king of the world!",
 "Hakuna Matata!",
-"Toga, toga, toga toga!",
-"Feed me, Seymour!",
-"I’m sorry, Dave. I’m afraid I can’t do that.",
-"Pay no attention to that man behind the curtain!",
 "Forget it, Jake. It’s Chinatown.",
-"Live long and prosper.",
 "May the Force be with you.",
 "Hasta la vista…baby.",
 "That’ll do, Pig.",

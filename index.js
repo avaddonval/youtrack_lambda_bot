@@ -2,14 +2,14 @@ const tg = require('./telegram')
 const yt = require('./youtrack')
 exports.handler =  async function(event, context) {
   let items = await yt.getWorkItems();
-  let res = tg.sendWorkItems(items);
+  let res = await tg.sendWorkItems(items).catch(err=>{console.log(err)});
   return res;
 }
 //just for local tests
 /* ;(async () => {
   try {
-    await handler()
+    await exports.handler()
   }catch(err){
     console.log(err)
   }
-})(); */ 
+})();  */
