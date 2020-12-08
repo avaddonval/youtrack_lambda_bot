@@ -1,40 +1,58 @@
 const axios = require('axios')
-//require('dotenv').config();
+require('dotenv').config();
 const token = process.env.TG_API_TOKEN;
 const chatId = process.env.TG_CHAT_ID
 let tg = axios.create({
   baseURL: 'https://api.telegram.org/bot'+token,
 });
-function prepareText(items){
-  let texts = [];
-  for(let key in items){
-    let item = items[key]
-    let helloPhrase = getCatchPhrase();
-    let text = `<b>${helloPhrase}</b> \n`;
-    text += `\n<b>${item.fullName}</b> - ${Math.floor(item.fullTime/60)}h ${item.fullTime%60}m \n`
-    for(let work of item.workItems){
-      //let date = new Date(work.created)
-      //text += `${date.toString()}\n`
-      text += `${work.duration.presentation} - ${work.type.name} - ${work.text} \n`
-    }
-    texts.push(text)
+function prepareText(item){
+  let text = '';
+  text += `\n<b>${item.fullName}</b> - ${Math.floor(item.fullTime/60)}h ${item.fullTime%60}m \n`
+  for(let work of item.workItems){
+    //let date = new Date(work.created)
+    //text += `${date.toString()}\n`
+    text += `${work.duration.presentation} - ${work.type.name} - ${work.text} \n`
   }
-  return texts
+  return text
 }
-
+async function sendMessage(text){
+  return await tg.get('/sendMessage',{
+    params:{
+      chat_id:chatId,
+      text,
+      parse_mode:'html'
+    }
+  }).then(response => {
+    return response.data
+  }).catch(err=>{
+    console.log(err)
+    throw err
+  });
+}
 module.exports = {
   sendWorkItems: async (items) => {
-    let texts = prepareText(items);
-    return await Promise.all(texts.map(text =>{
-      tg.get('/sendMessage',{
-        params:{
-          chat_id:chatId,
-          text,
-          parse_mode:'html' 
-        }
-      }).catch(err=>{console.log(err)});
-    }))
-    
+    let helloPhrase = getCatchPhrase();
+    let text = `<b>${helloPhrase}</b> \n`;
+    let blocks = 0;
+    let messages = [];
+    for(let key in items){
+      let item = items[key]
+      let textBlock = prepareText(item);
+      let tempText = text+textBlock
+      if(tempText.length>4096){
+        let message = await sendMessage(text)
+        messages.push(message)
+        text = textBlock
+        blocks ++;
+      }else{
+        text += textBlock;
+      }
+    }
+    if(!blocks) {
+      let message = await sendMessage(text)
+      messages.push(message)
+    }
+    return messages
   }
 }
 
