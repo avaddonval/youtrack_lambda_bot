@@ -42,10 +42,13 @@ function groupByUser(items){
   return formatted
 }
 module.exports = {
-  getWorkItems: async() => {
+  getWorkItems: async(day='yesterday') => {
+    if(day!=='today' && day!=='yesterday') throw new Error('WRONG_DAY')
     let createdStart = new Date()
+    if(day==='yesterday') createdStart.setDate(createdStart.getDate()-1)
     createdStart.setUTCHours(0,0,0,0);
     let createdEnd = new Date()
+    if(day==='yesterday') createdEnd.setDate(createdEnd.getDate()-1)
     createdEnd.setUTCHours(23,59,59,999);
     console.log(createdStart, createdEnd)
     let timeInterval=`&createdStart=${createdStart.getTime()}&createdEnd=${createdEnd.getTime()}`

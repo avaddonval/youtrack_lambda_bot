@@ -1,7 +1,7 @@
 const tg = require('./telegram')
 const yt = require('./youtrack')
 exports.handler =  async function(event, context) {
-  let items = await yt.getWorkItems();
+  let items = await yt.getWorkItems(event?event.day:'yesterday');
   let res = await tg.sendWorkItems(items).catch(err=>{console.log(err)});
   console.log(res)
   return res;
@@ -13,4 +13,4 @@ exports.handler =  async function(event, context) {
   }catch(err){
     console.log(err)
   }
-})();  */
+})(); */

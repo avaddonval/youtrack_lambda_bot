@@ -1,5 +1,5 @@
 const axios = require('axios')
-require('dotenv').config();
+//require('dotenv').config();
 const token = process.env.TG_API_TOKEN;
 const chatId = process.env.TG_CHAT_ID
 let tg = axios.create({
